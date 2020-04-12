@@ -1,10 +1,39 @@
 import React, { useState, useEffect } from "react";
 import Graph from "./Components/Graph/Graph";
+import io from "socket.io-client";
+import useSocket from "use-socket.io-client";
+
+let socket;
+const ENDPOINT = "https://localhost:8000/";
 const App = () => {
   const [series, setSeries] = useState({ series: [] });
   const [timer, setTimer] = useState(-1);
   const [randomN, setRandomN] = useState([]);
-  const [id, setId] = useState(-1);
+  const [socketSet, setSocketSet] = useState(false);
+  // const [socket] = useSocket("http://localhost:8000/");
+  // socket.connect();
+  // console.log(socket);
+  // socket.on("connect", function() {
+  //   console.log("Connected to Server");
+  // });
+
+  useEffect(() => {
+    if (!socketSet) {
+      socket = io("http://localhost:8000/");
+      console.log("Client initiataited socket");
+      setSocketSet(true);
+    }
+    socket.on("NewData", function(obj) {
+      // console.log("OBJEX SOC", obj);
+      setRandomN(obj["data_points"]);
+    });
+    return () => {
+      socket.emit("disconnect");
+      console.log("disconnected");
+      socket.off();
+    };
+  }, [ENDPOINT, socketSet]);
+
   useEffect(() => {
     fetch("/fetch_series")
       .then(resp => resp.json())
@@ -12,24 +41,33 @@ const App = () => {
         console.log(value["series"]);
         if (series["series"].length == 0) {
           setSeries(value);
-          setId(value["id"]);
         }
-        console.log(series, id);
+        console.log(series);
       });
-  }, [series, id]);
+  }, [series]);
 
   useEffect(() => {
     if (timer != -1) {
       const interval = setInterval(() => {
-        var value = Math.random() * 1000;
-        var url = `/store_series?id=${id}&&val=${value}`;
-        fetch(url);
-        setRandomN([...randomN, Math.floor(Math.random() * 1000)]);
-        console.log(randomN);
+        var value = Math.floor(Math.random() * 1000);
+        socket.emit("DataPoint", value);
+
+        socket.on("NewData", function(obj) {
+          // console.log("OBJEX SOC", obj);
+          setRandomN(obj["data_points"]);
+        });
+
+        // setRandomN([...randomN, value]);
+        console.log("The random Arr", randomN);
       }, timer * 1000);
 
       return () => clearInterval(interval);
+      //This works as discconeect effect (unmounting)
     }
+    socket.on("NewData", function(obj) {
+      // console.log("OBJEX SOC", obj);
+      setRandomN(obj["data_points"]);
+    });
   }, [timer, randomN]);
 
   onsubmit = event => {
