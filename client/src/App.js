@@ -10,12 +10,7 @@ const App = () => {
   const [timer, setTimer] = useState(-1);
   const [randomN, setRandomN] = useState([]);
   const [socketSet, setSocketSet] = useState(false);
-  // const [socket] = useSocket("http://localhost:8000/");
-  // socket.connect();
-  // console.log(socket);
-  // socket.on("connect", function() {
-  //   console.log("Connected to Server");
-  // });
+
 
   useEffect(() => {
     if (!socketSet) {
@@ -62,7 +57,7 @@ const App = () => {
       }, timer * 1000);
 
       return () => clearInterval(interval);
-      //This works as discconeect effect (unmounting)
+      
     }
     socket.on("NewData", function(obj) {
       // console.log("OBJEX SOC", obj);
