@@ -4,6 +4,7 @@ const App = () => {
   const [series, setSeries] = useState({ series: [] });
   const [timer, setTimer] = useState(-1);
   const [randomN, setRandomN] = useState([]);
+  const [id, setId] = useState(-1);
   useEffect(() => {
     fetch("/fetch_series")
       .then(resp => resp.json())
@@ -11,17 +12,22 @@ const App = () => {
         console.log(value["series"]);
         if (series["series"].length == 0) {
           setSeries(value);
+          setId(value["id"]);
         }
-        console.log(series);
+        console.log(series, id);
       });
-  }, [series]);
+  }, [series, id]);
 
   useEffect(() => {
     if (timer != -1) {
       const interval = setInterval(() => {
+        var value = Math.random() * 1000;
+        var url = `/store_series?id=${id}&&val=${value}`;
+        fetch(url);
         setRandomN([...randomN, Math.floor(Math.random() * 1000)]);
         console.log(randomN);
       }, timer * 1000);
+
       return () => clearInterval(interval);
     }
   }, [timer, randomN]);
